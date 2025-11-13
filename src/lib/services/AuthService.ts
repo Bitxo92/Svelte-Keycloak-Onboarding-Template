@@ -284,7 +284,7 @@ export class AuthService {
 
   /**
    * #########################################################################################################################################################
-   * # Onboarding Helper Methods
+   * # Onboarding Methods
    * #########################################################################################################################################################
    */
 
@@ -450,7 +450,8 @@ export class AuthService {
       username: currentUser.preferred_username || "",
       email: currentUser.email || "",
       name: currentUser.name || "",
-      roles: currentUser.realm_access?.roles || [],
+      roles:
+        currentUser.resource_access?.[KEYCLOAK_CONFIG.clientId]?.roles || [],
       password_expiration: null,
     };
   }

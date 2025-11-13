@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { user } from "$lib/stores/auth";
+  import { onMount } from "svelte";
   import { authService } from "$lib/services/AuthService";
   import { Button } from "$lib/components/ui/button/index.js";
 
-  interface UserInfo {
-    name?: string;
-  }
+  let userName = "Usuario";
 
-  $: userName = ($user as unknown as UserInfo)?.name || "Usuario";
+  onMount(async () => {
+    const currentUser = await authService.getCurrentUser();
+    userName = currentUser?.name || "Usuario";
+  });
 
   const handleLogout = async () => {
     await authService.logout();

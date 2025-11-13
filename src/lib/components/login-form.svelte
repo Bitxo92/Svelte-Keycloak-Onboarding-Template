@@ -94,7 +94,7 @@
             <Input
               id="username-{id}"
               type="text"
-              placeholder="tu_usuario"
+              placeholder="introduzca tu nombre de usuario"
               required
               disabled={isLoading}
               bind:value={username}
@@ -118,6 +118,7 @@
                 id="password-{id}"
                 type={showPassword ? "text" : "password"}
                 required
+                placeholder="introduzca tu contraseña"
                 disabled={isLoading}
                 bind:value={password}
               />

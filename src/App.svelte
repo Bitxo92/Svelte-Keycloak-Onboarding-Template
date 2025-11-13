@@ -1,44 +1,85 @@
 <script lang="ts">
-  import svelteLogo from "./assets/svelte.svg";
-  import viteLogo from "/vite.svg";
+  import { onMount } from "svelte";
+  import "./app.css";
+  import HomePage from "$lib/pages/home/+page.svelte";
+  import LoginPage from "$lib/pages/login/+page.svelte";
+  import { isAuthenticated } from "$lib/stores/auth";
+  import { authService } from "$lib/services/AuthService";
+
+  let currentPage = $state("home");
+  let authInitialized = $state(false);
+
+  onMount(() => {
+    // Initialize Keycloak authentication
+    authService.initialize().then(() => {
+      authInitialized = true;
+
+      // Route based on authentication status
+      const path = window.location.pathname;
+      handleRouting(path);
+    });
+
+    const handleNavigation = () => {
+      const path = window.location.pathname;
+      handleRouting(path);
+    };
+
+    // Listen for successful login event from login form
+    const handleLoginSuccess = () => {
+      window.history.pushState(null, "", "/home");
+      currentPage = "home";
+    };
+
+    // Listen for logout event
+    const handleLogoutSuccess = () => {
+      window.history.pushState(null, "", "/login");
+      currentPage = "login";
+    };
+
+    window.addEventListener("popstate", handleNavigation);
+    window.addEventListener("login-success", handleLoginSuccess);
+    window.addEventListener("logout-success", handleLogoutSuccess);
+
+    return () => {
+      window.removeEventListener("popstate", handleNavigation);
+      window.removeEventListener("login-success", handleLoginSuccess);
+      window.removeEventListener("logout-success", handleLogoutSuccess);
+    };
+  });
+
+  const handleRouting = (path: string) => {
+    const authenticated = $isAuthenticated;
+
+    if (path === "/login") {
+      currentPage = "login";
+    } else if (path === "/" || path === "/home") {
+      // Protect home page - redirect to login if not authenticated
+      if (!authenticated) {
+        window.history.pushState(null, "", "/login");
+        currentPage = "login";
+      } else {
+        currentPage = "home";
+      }
+    } else {
+      // Default to home, which will redirect to login if not authenticated
+      if (!authenticated) {
+        window.history.pushState(null, "", "/login");
+        currentPage = "login";
+      } else {
+        currentPage = "home";
+      }
+    }
+  };
 </script>
 
-<main>
-  <div>
-    <a href="https://vite.dev" target="_blank" rel="noreferrer">
-      <img src={viteLogo} class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
+{#if authInitialized}
+  {#if currentPage === "home"}
+    <HomePage />
+  {:else if currentPage === "login"}
+    <LoginPage />
+  {/if}
+{:else}
+  <div class="flex items-center justify-center min-h-screen">
+    <p class="text-muted-foreground">Loading...</p>
   </div>
-  <h1>Vite + Svelte</h1>
-
-  <p>
-    Check out <a
-      href="https://github.com/sveltejs/kit#readme"
-      target="_blank"
-      rel="noreferrer">SvelteKit</a
-    >, the official Svelte app framework powered by Vite!
-  </p>
-
-  <p class="read-the-docs">Click on the Vite and Svelte logos to learn more</p>
-</main>
-
-<style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  }
-</style>
+{/if}

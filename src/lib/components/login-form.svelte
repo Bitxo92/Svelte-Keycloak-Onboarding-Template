@@ -55,7 +55,7 @@
 
       // Fallback navigation in case event isn't handled
       setTimeout(() => {
-        window.location.href = "/home";
+        window.location.href = "/";
       }, 100);
     } catch (err: any) {
       error = err.message || "Error during login. Please try again.";

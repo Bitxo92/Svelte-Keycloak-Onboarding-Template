@@ -6,7 +6,7 @@
   import { isAuthenticated } from "$lib/stores/auth";
   import { authService } from "$lib/services/AuthService";
 
-  let currentPage = $state("home");
+  let currentPage = $state("/");
   let authInitialized = $state(false);
 
   onMount(() => {
@@ -26,8 +26,8 @@
 
     // Listen for successful login event from login form
     const handleLoginSuccess = () => {
-      window.history.pushState(null, "", "/home");
-      currentPage = "home";
+      window.history.pushState(null, "", "/");
+      currentPage = "/";
     };
 
     // Listen for logout event
@@ -58,7 +58,7 @@
         window.history.pushState(null, "", "/login");
         currentPage = "login";
       } else {
-        currentPage = "home";
+        currentPage = "/";
       }
     } else {
       // Default to home, which will redirect to login if not authenticated
@@ -66,14 +66,14 @@
         window.history.pushState(null, "", "/login");
         currentPage = "login";
       } else {
-        currentPage = "home";
+        currentPage = "/";
       }
     }
   };
 </script>
 
 {#if authInitialized}
-  {#if currentPage === "home"}
+  {#if currentPage === "/"}
     <HomePage />
   {:else if currentPage === "login"}
     <LoginPage />

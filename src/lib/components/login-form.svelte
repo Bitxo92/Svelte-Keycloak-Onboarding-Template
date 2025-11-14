@@ -106,12 +106,6 @@
                 <Lock class="h-4 w-4 text-muted-foreground" />
                 <FieldLabel for="password-{id}">Contraseña</FieldLabel>
               </div>
-              <a
-                href="##"
-                class="ml-auto text-sm underline-offset-2 hover:underline"
-              >
-                ¿Olvidaste tu contraseña?
-              </a>
             </div>
             <div class="relative flex items-center">
               <Input
@@ -126,7 +120,7 @@
                 type="button"
                 onclick={() => (showPassword = !showPassword)}
                 disabled={isLoading}
-                class="absolute right-3 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                class="absolute right-3 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 hover:cursor-pointer"
               >
                 {#if showPassword}
                   <EyeOff class="h-4 w-4" />
@@ -135,9 +129,25 @@
                 {/if}
               </button>
             </div>
+            <div class="flex justify-end">
+              <a
+                href="#"
+                onclick={(e) => {
+                  e.preventDefault();
+                  // Implement password recovery logic here
+                }}
+                class="text-sm text-muted-foreground underline-offset-2 hover:underline"
+              >
+                ¿Olvidaste tu contraseña?
+              </a>
+            </div>
           </Field>
           <Field>
-            <Button type="submit" disabled={isLoading} class="w-full">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              class="w-full hover:cursor-pointer"
+            >
               {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
             </Button>
           </Field>

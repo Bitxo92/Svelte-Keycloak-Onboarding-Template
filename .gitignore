@@ -27,3 +27,8 @@ dist-ssr
 .env
 .env.local
 
+#python
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version

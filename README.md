@@ -7,7 +7,8 @@
   End-to-end authentication and onboarding flow using <b>Keycloak</b> for identity management and <b>Svelte</b> for a reactive front end.
 </h3>
 <p align="center">
-  <img width="1076" height="579" alt="image" src="https://github.com/user-attachments/assets/1f2b1ed8-95c7-4daa-8e2c-374005814c51" />
+  <img width="1305" height="715" alt="image" src="https://github.com/user-attachments/assets/3087d0f5-89f5-4b57-b85f-5522b225761d" />
+
 </p>
 
 ## 📝 About

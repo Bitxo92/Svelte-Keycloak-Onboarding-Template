@@ -196,6 +196,14 @@ export class AuthService {
         token.set(keycloak.token || null);
         user.set(keycloak.tokenParsed);
 
+        // Save updated tokens to localStorage
+        this.saveTokensToStorage({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+          id_token: data.id_token,
+          tokenParsed: keycloak.tokenParsed,
+        });
+
         console.log("✅ Token refreshed successfully");
       } else {
         console.warn("Token refresh failed, logging out");

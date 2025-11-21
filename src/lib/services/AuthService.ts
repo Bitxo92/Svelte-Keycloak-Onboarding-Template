@@ -1,6 +1,11 @@
 import { get } from "svelte/store";
 import keycloak, { KEYCLOAK_CONFIG } from "$lib/utils/keycloak";
-import { isAuthenticated, user, token } from "$lib/stores/auth";
+import {
+  isAuthenticated,
+  user,
+  token,
+  inactivityTimeRemaining,
+} from "$lib/stores/auth";
 
 // Types
 export interface LoginRequest {
@@ -49,6 +54,10 @@ export const AUTH_ERROR_MESSAGES: Record<string, string> = {
 // Token refresh interval ID
 let tokenRefreshInterval: number | null = null;
 
+// Inactivity timer variables
+let inactivityTimeout: number | null = null;
+let inactivityCountdownInterval: number | null = null;
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
 // Check if we're in browser environment
 const isBrowser = typeof window !== "undefined";
 
@@ -218,13 +227,13 @@ export class AuthService {
   private startTokenRefresh(): void {
     if (tokenRefreshInterval) return; // Already running
 
-    console.log("🔄 Starting automatic token refresh every 30 seconds");
+    console.log("🔄 Starting automatic token refresh every 3 minutes");
     tokenRefreshInterval = setInterval(() => {
       if (keycloak.authenticated) {
         this.refreshToken();
         console.log("🔄 Attempting to refresh token...");
       }
-    }, 30 * 1000); // 30 seconds
+    }, 3 * 60 * 1000);
   }
 
   /**
@@ -236,6 +245,104 @@ export class AuthService {
       tokenRefreshInterval = null;
       console.log("⏹️ Stopped automatic token refresh");
     }
+  }
+
+  /**
+   * #########################################################################################################################################################
+   * # Inactivity Timeout Management
+   * #########################################################################################################################################################
+   */
+
+  /**
+   * Start inactivity timer - will logout user after 30 minutes of inactivity
+   */
+  private startInactivityTimer(): void {
+    if (inactivityTimeout) return; // Already running
+
+    console.log("⏱️ Starting inactivity timer (30 minutes)");
+    let timeRemaining = INACTIVITY_TIMEOUT;
+
+    // Update the countdown every second
+    inactivityCountdownInterval = setInterval(() => {
+      timeRemaining -= 1000;
+      inactivityTimeRemaining.set(timeRemaining);
+
+      if (timeRemaining <= 0) {
+        this.stopInactivityTimer();
+        console.warn("⚠️ User inactive for 30 minutes, logging out...");
+        alert("⏱️ Usuario inactivo, cerrando sesión...");
+        this.logout();
+      }
+    }, 1000);
+
+    inactivityTimeRemaining.set(timeRemaining);
+  }
+
+  /**
+   * Reset inactivity timer - call this on user activity
+   */
+  private resetInactivityTimer(): void {
+    // Clear existing timers
+    if (inactivityTimeout) {
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = null;
+    }
+    if (inactivityCountdownInterval) {
+      clearInterval(inactivityCountdownInterval);
+      inactivityCountdownInterval = null;
+    }
+
+    // Only restart if user is authenticated
+    if (this.isAuthenticated()) {
+      this.startInactivityTimer();
+      console.log("🔄 Inactivity timer reset");
+    }
+  }
+
+  /**
+   * Stop inactivity timer
+   */
+  private stopInactivityTimer(): void {
+    if (inactivityTimeout) {
+      clearTimeout(inactivityTimeout);
+      inactivityTimeout = null;
+    }
+    if (inactivityCountdownInterval) {
+      clearInterval(inactivityCountdownInterval);
+      inactivityCountdownInterval = null;
+    }
+    inactivityTimeRemaining.set(null);
+    console.log("⏹️ Stopped inactivity timer");
+  }
+
+  /**
+   * Register activity listeners for inactivity tracking
+   * Should be called from App.svelte to set up global activity listeners
+   */
+  registerActivityListeners(): void {
+    if (!isBrowser) return;
+
+    const activityEvents = [
+      "mousedown",
+      "mousemove",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+
+    const handleActivity = () => {
+      if (this.isAuthenticated()) {
+        this.resetInactivityTimer();
+      }
+    };
+
+    // Attach listeners to all activity events
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, handleActivity, { passive: true });
+    });
+
+    console.log("📡 Activity listeners registered for inactivity tracking");
   }
 
   /**
@@ -271,6 +378,10 @@ export class AuthService {
 
         // Start automatic token refresh
         this.startTokenRefresh();
+
+        // Start inactivity timeout
+        this.startInactivityTimer();
+
         console.log("✅ Session restored from storage");
       } else if (keycloak.authenticated && keycloak.token) {
         // Session exists in Keycloak instance
@@ -280,6 +391,9 @@ export class AuthService {
 
         // Start automatic token refresh
         this.startTokenRefresh();
+
+        // Start inactivity timeout
+        this.startInactivityTimer();
       } else {
         // No session, user needs to login
         isAuthenticated.set(false);
@@ -362,6 +476,9 @@ export class AuthService {
       // Initiate automatic token refresh
       this.startTokenRefresh();
 
+      // Initiate inactivity timeout
+      this.startInactivityTimer();
+
       const loginResponse: LoginResponse = {
         access_token: data.access_token,
         token_type: data.token_type || "Bearer",
@@ -394,6 +511,9 @@ export class AuthService {
 
     // Stop automatic token refresh
     this.stopTokenRefresh();
+
+    // Stop inactivity timer
+    this.stopInactivityTimer();
 
     // Attempt to revoke the refresh token on the server
     if (keycloak.refreshToken) {

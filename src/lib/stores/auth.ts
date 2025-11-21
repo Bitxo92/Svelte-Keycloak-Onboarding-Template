@@ -8,3 +8,6 @@ const isBrowser = typeof window !== "undefined";
 export const isAuthenticated = writable<boolean>(false);
 export const user = writable<any>(null);
 export const token = writable<string | null>(null);
+
+// Inactivity timer store - tracks remaining time until auto logout (in milliseconds)
+export const inactivityTimeRemaining = writable<number | null>(null);

@@ -17,6 +17,9 @@
       // Route based on authentication status
       const path = window.location.pathname;
       handleRouting(path);
+
+      // Register activity listeners for inactivity tracking
+      authService.registerActivityListeners();
     });
 
     const handleNavigation = () => {
